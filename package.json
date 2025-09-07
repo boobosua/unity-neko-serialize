@@ -1,0 +1,15 @@
+{
+  "name": "com.nekoindie.nekounity.serialize",
+  "version": "0.0.1",
+  "displayName": "Neko Serialize",
+  "description": "This is a package containing a save load system using the Newtonsoft.Json library for Unity game engine.",
+  "unity": "2020.3",
+  "dependencies": {
+    "com.nekoindie.nekolib": "https://github.com/boobosua/unity-nekolib.git",
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
+  },
+  "author": {
+    "name": "Nguyen Thanh Trung",
+    "url": "https://github.com/boobosua"
+  }
+}
