@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 namespace NekoSerialize
@@ -5,11 +6,19 @@ namespace NekoSerialize
     public static class NSR
     {
         /// <summary>
-        /// Saves the specified data to the save service.
+        /// Saves the specified data to memory cache. Use SaveAll() to persist to storage.
         /// </summary>
-        public static void Save<T>(string key, T data, bool autoSave = true)
+        public static void Save<T>(string key, T data)
         {
-            SaveLoadService.Save(key, data, autoSave);
+            SaveLoadService.Save(key, data);
+        }
+
+        /// <summary>
+        /// Saves data directly to persistent storage immediately.
+        /// </summary>
+        public static void SaveDirect<T>(string key, T data)
+        {
+            SaveLoadService.SaveDirect(key, data);
         }
 
         /// <summary>
@@ -74,6 +83,14 @@ namespace NekoSerialize
         public static async Task LoadAllAsync()
         {
             await SaveLoadService.LoadAllAsync();
+        }
+
+        /// <summary>
+        /// Gets the last save time.
+        /// </summary>
+        public static DateTime LastSaveTime
+        {
+            get { return SaveLoadService.GetLastSaveTime(); }
         }
     }
 }

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace NekoSerialize
 {
-    public abstract class SaveableMonoBehaviour : MonoBehaviour, ISaveableComponent
+    public abstract class SaveableMonoBehaviour<T> : MonoBehaviour, ISaveableComponent<T> where T : class, new()
     {
         [Header("Save Settings")]
         [SerializeField] private string _saveKey;
@@ -13,8 +13,8 @@ namespace NekoSerialize
         public bool AutoSave => _autoSave;
         public bool AutoLoad => _autoLoad;
 
-        public abstract object GetSaveData();
-        public abstract void LoadSaveData(object data);
+        public abstract T GetSaveData();
+        public abstract void LoadSaveData(T data);
 
         /// <summary>
         /// Manually save this component's data.
@@ -31,7 +31,7 @@ namespace NekoSerialize
         {
             if (NSR.Exists(SaveKey))
             {
-                var data = NSR.Load<object>(SaveKey);
+                var data = NSR.Load<T>(SaveKey);
                 LoadSaveData(data);
             }
         }

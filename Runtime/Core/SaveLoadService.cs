@@ -3,11 +3,24 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using Newtonsoft.Json.Linq;
+using NekoLib.Services;
 
 namespace NekoSerialize
 {
+    /// <summary>
+    /// Core save/load service with separated memory and storage operations.
+    /// 
+    /// Architecture:
+    /// - Save<T>(): Memory-only operations (fast, no I/O)
+    /// - SaveDirect<T>(): Direct storage operations (immediate I/O)
+    /// - SaveAll(): Batch write all cached data to storage
+    /// 
+    /// This separation prevents recursion bugs and gives better control over I/O operations.
+    /// </summary>
     public static class SaveLoadService
     {
+        private const string LastSaveTimeKey = "LastSaveTime";
+
         private static Dictionary<string, object> s_saveData = new();
         private static SaveDataHandler s_dataHandler;
         private static SaveLoadSettings s_settings;
@@ -72,9 +85,9 @@ namespace NekoSerialize
         }
 
         /// <summary>
-        /// Save data with the specified key.
+        /// Save data to memory cache only. Use SaveAll() or SaveDirect() to persist to storage.
         /// </summary>
-        public static void Save<T>(string key, T data, bool autoSave = true)
+        public static void Save<T>(string key, T data)
         {
             if (!s_isInitialized)
             {
@@ -82,11 +95,20 @@ namespace NekoSerialize
                 return;
             }
             s_saveData[key] = data;
+        }
 
-            if (autoSave)
+        /// <summary>
+        /// Save data directly to persistent storage immediately.
+        /// </summary>
+        public static void SaveDirect<T>(string key, T data)
+        {
+            if (!s_isInitialized)
             {
-                SaveAll();
+                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
+                return;
             }
+            s_saveData[key] = data;
+            s_dataHandler.SaveData(s_saveData);
         }
 
         /// <summary>
@@ -103,16 +125,19 @@ namespace NekoSerialize
             {
                 try
                 {
-                    if (data is JObject jObj)
+                    // Direct type match - fastest path (no conversion needed)
+                    if (data is T directValue)
+                    {
+                        return directValue;
+                    }
+                    // Handle JObject from JSON deserialization
+                    else if (data is JObject jObj)
                     {
                         using var reader = jObj.CreateReader();
                         var serializer = UnityJsonSettings.CreateSerializer();
                         return serializer.Deserialize<T>(reader) ?? defaultValue;
                     }
-                    else if (data is T directValue)
-                    {
-                        return directValue;
-                    }
+                    // Fallback for other object types (should be rare with generic approach)
                     else
                     {
                         var serializer = UnityJsonSettings.CreateSerializer();
@@ -168,6 +193,9 @@ namespace NekoSerialize
                 Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
                 return;
             }
+
+            // Store last save time in Utc time - now safe from recursion
+            Save(LastSaveTimeKey, DateTimeService.UtcNow);
             s_dataHandler.SaveData(s_saveData);
         }
 
@@ -196,6 +224,7 @@ namespace NekoSerialize
             }
             try
             {
+                Save(LastSaveTimeKey, DateTimeService.UtcNow);
                 var dataToSave = new Dictionary<string, object>(s_saveData);
                 await s_dataHandler.SaveDataAsync(dataToSave);
                 Debug.Log("[SaveLoadService] All data saved asynchronously");
@@ -265,7 +294,51 @@ namespace NekoSerialize
             s_saveData = s_dataHandler.LoadData();
         }
 
+        /// <summary>
+        /// Get the last save time.
+        /// </summary>
+        public static DateTime GetLastSaveTime()
+        {
+            return Load(LastSaveTimeKey, DateTime.MinValue);
+        }
+
 #if UNITY_EDITOR
+        /// <summary>
+        /// Check if the service is initialized (for editor use).
+        /// </summary>
+        public static bool IsInitialized => s_isInitialized;
+
+        /// <summary>
+        /// Get all save data (for editor use).
+        /// </summary>
+        public static Dictionary<string, object> GetAllSaveData()
+        {
+            if (!s_isInitialized)
+            {
+                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() first.");
+                return new Dictionary<string, object>();
+            }
+            return new Dictionary<string, object>(s_saveData);
+        }
+
+        /// <summary>
+        /// Check if data is persisted to storage (for editor use).
+        /// </summary>
+        public static bool IsDataPersisted(string key)
+        {
+            if (!s_isInitialized) return false;
+
+            try
+            {
+                var persistedData = s_dataHandler.LoadData();
+                return persistedData.ContainsKey(key);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         /// <summary>
         /// Get current settings (for editor and runtime use).
         /// </summary>

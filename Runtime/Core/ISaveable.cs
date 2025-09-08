@@ -1,9 +1,9 @@
 namespace NekoSerialize
 {
-    public interface ISaveable
+    public interface ISaveable<T> where T : class, new()
     {
         string SaveKey { get; }
-        object GetSaveData();
-        void LoadSaveData(object data);
+        T GetSaveData();
+        void LoadSaveData(T data);
     }
 }

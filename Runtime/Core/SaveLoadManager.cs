@@ -40,6 +40,11 @@ namespace NekoSerialize
             if (!_saveableComponents.Contains(saveable))
             {
                 _saveableComponents.Add(saveable);
+
+                if (saveable.AutoLoad)
+                {
+                    saveable.Load();
+                }
             }
         }
 
@@ -50,6 +55,11 @@ namespace NekoSerialize
         {
             if (_saveableComponents.Contains(saveable))
             {
+                if (saveable.AutoSave)
+                {
+                    saveable.Save();
+                }
+
                 _saveableComponents.Remove(saveable);
             }
         }
@@ -63,8 +73,7 @@ namespace NekoSerialize
             {
                 if (component.AutoSave)
                 {
-                    var data = component.GetSaveData();
-                    NSR.Save(component.SaveKey, data);
+                    component.Save(); // Each component handles its own save logic
                 }
             }
 
