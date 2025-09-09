@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using NekoLib.Services;
 using NekoLib.Extensions;
 using NekoLib.Core;
+using NekoLib.Utilities;
 
 namespace NekoSerialize
 {
@@ -307,6 +308,60 @@ namespace NekoSerialize
         }
 
 #if UNITY_EDITOR
+        /// <summary>
+        /// Handle cleanup when play mode exits without domain reload (for editor use).
+        /// </summary>
+        [UnityEditor.InitializeOnLoadMethod]
+        private static void HandlePlayModeStateChanged()
+        {
+            UnityEditor.EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
+
+        private static void OnPlayModeStateChanged(UnityEditor.PlayModeStateChange state)
+        {
+            if (state == UnityEditor.PlayModeStateChange.ExitingPlayMode && Utils.IsReloadDomainDisabled())
+            {
+                DisposeService();
+            }
+        }
+
+        /// <summary>
+        /// Dispose and cleanup the service (for editor use).
+        /// </summary>
+        private static void DisposeService()
+        {
+            if (!s_isInitialized) return;
+
+            try
+            {
+                // Save any pending data before cleanup.
+                if (SaveLoadManager.HasInstance)
+                {
+                    SaveLoadManager.Instance.SaveAllComponents();
+                }
+                else
+                {
+                    SaveAll();
+                }
+
+                // Clear cached data.
+                s_saveData?.Clear();
+                s_saveData = null;
+
+                // Reset state.
+                s_dataHandler = null;
+                s_settings = null;
+                s_isInitialized = false;
+
+                Debug.Log("[SaveLoadService] Service disposed and cleaned up.");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[SaveLoadService] Error during disposal: {e.Message.Colorize(Swatch.VR)}");
+            }
+        }
+
+
         /// <summary>
         /// Check if the service is initialized (for editor use).
         /// </summary>

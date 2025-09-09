@@ -31,10 +31,10 @@ namespace NekoSerialize
 
         [Header("Auto Save/Load")]
         [field: SerializeField, Tooltip("Whether to automatically save game data when the game is paused.")]
-        public bool AutoSaveOnPause { get; private set; } = true;
+        public bool AutoSaveOnPause { get; private set; } = false;
 
         [field: SerializeField, Tooltip("Whether to automatically save game data when the game loses focus.")]
-        public bool AutoSaveOnFocusLost { get; private set; } = true;
+        public bool AutoSaveOnFocusLost { get; private set; } = false;
 
         [field: SerializeField, Min(0f), Tooltip("The interval at which to automatically save game data.")]
         public float AutoSaveInterval { get; private set; } = 0f; // 0 for disable.
