@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using NekoLib.Core;
+using NekoLib.Extensions;
 
 namespace NekoSerialize
 {
@@ -23,11 +25,11 @@ namespace NekoSerialize
             {
                 var json = SerializeData(data);
                 File.WriteAllText(SavePath, json);
-                Debug.Log($"[SingleJsonFileHandler] Data saved to: {SavePath}");
+                Debug.Log($"[SingleJsonFileHandler] Data saved to: {SavePath.Colorize(Swatch.DE)}");
             }
             catch (Exception e)
             {
-                Debug.LogError($"[SingleJsonFileHandler] Error saving data: {e.Message}");
+                Debug.LogError($"[SingleJsonFileHandler] Error saving data: {e.Message.Colorize(Swatch.VR)}");
             }
         }
 
@@ -42,7 +44,7 @@ namespace NekoSerialize
                 {
                     var json = File.ReadAllText(SavePath);
                     var data = DeserializeData<Dictionary<string, object>>(json);
-                    Debug.Log($"[SingleJsonFileHandler] Data loaded from: {SavePath}");
+                    Debug.Log($"[SingleJsonFileHandler] Data loaded from: {SavePath.Colorize(Swatch.DE)}");
                     return data ?? new();
                 }
                 else
@@ -53,7 +55,7 @@ namespace NekoSerialize
             }
             catch (Exception e)
             {
-                Debug.LogError($"[SingleJsonFileHandler] Error loading data: {e.Message}");
+                Debug.LogError($"[SingleJsonFileHandler] Error loading data: {e.Message.Colorize(Swatch.VR)}");
                 return new();
             }
         }

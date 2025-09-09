@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Newtonsoft.Json.Linq;
 using NekoLib.Services;
+using NekoLib.Extensions;
+using NekoLib.Core;
 
 namespace NekoSerialize
 {
@@ -147,9 +149,11 @@ namespace NekoSerialize
                 }
                 catch (Exception e)
                 {
-                    Debug.LogWarning($"[SaveLoadService] Error loading data for key: {key}, Exception: {e}.");
+                    Debug.LogWarning($"[SaveLoadService] Error loading data for key: {key.Colorize(Swatch.VR)}, Exception: {e}.");
                 }
             }
+
+            Debug.LogWarning($"[SaveLoadService] No data found for key: {key.Colorize(Swatch.VR)}. Returning default value.");
             return defaultValue;
         }
 
@@ -179,7 +183,7 @@ namespace NekoSerialize
             if (s_saveData.ContainsKey(key))
             {
                 s_saveData.Remove(key);
-                Debug.Log($"[SaveLoadService] Deleted data for key: {key}");
+                Debug.Log($"[SaveLoadService] Deleted data for key: {key.Colorize(Swatch.DE)}");
             }
         }
 
@@ -231,7 +235,7 @@ namespace NekoSerialize
             }
             catch (Exception e)
             {
-                Debug.LogError($"[SaveLoadService] Error during async save: {e.Message}");
+                Debug.LogError($"[SaveLoadService] Error during async save: {e.Message.Colorize(Swatch.VR)}");
             }
         }
 
@@ -253,7 +257,7 @@ namespace NekoSerialize
             }
             catch (Exception e)
             {
-                Debug.LogError($"[SaveLoadService] Error during async load: {e.Message}");
+                Debug.LogError($"[SaveLoadService] Error during async load: {e.Message.Colorize(Swatch.VR)}");
                 s_saveData = new Dictionary<string, object>();
             }
         }

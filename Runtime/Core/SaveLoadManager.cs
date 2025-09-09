@@ -49,7 +49,7 @@ namespace NekoSerialize
         }
 
         /// <summary>
-        /// Unregisters a saveable component from the manager.
+        /// Unregister a saveable component from the manager.
         /// </summary>
         public void UnregisterSaveableComponent(ISaveableComponent saveable)
         {

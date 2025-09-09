@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using NekoLib.Core;
+using NekoLib.Extensions;
 
 namespace NekoSerialize
 {
@@ -21,11 +23,11 @@ namespace NekoSerialize
                 var json = SerializeData(data);
                 PlayerPrefs.SetString(_settings.PlayerPrefsKey, json);
                 PlayerPrefs.Save();
-                Debug.Log($"[PlayerPrefsHandler] Data saved to PlayerPrefs with key: {_settings.PlayerPrefsKey}");
+                Debug.Log($"[PlayerPrefsHandler] Data saved to PlayerPrefs with key: {_settings.PlayerPrefsKey.Colorize(Swatch.DE)}");
             }
             catch (Exception e)
             {
-                Debug.LogError($"[PlayerPrefsHandler] Error saving data: {e.Message}");
+                Debug.LogError($"[PlayerPrefsHandler] Error saving data: {e.Message.Colorize(Swatch.VR)}");
             }
         }
 
@@ -40,7 +42,7 @@ namespace NekoSerialize
                 {
                     var json = PlayerPrefs.GetString(_settings.PlayerPrefsKey);
                     var data = DeserializeData<Dictionary<string, object>>(json);
-                    Debug.Log($"[PlayerPrefsHandler] Data loaded from PlayerPrefs with key: {_settings.PlayerPrefsKey}");
+                    Debug.Log($"[PlayerPrefsHandler] Data loaded from PlayerPrefs with key: {_settings.PlayerPrefsKey.Colorize(Swatch.DE)}");
                     return data ?? new();
                 }
                 else
@@ -51,7 +53,7 @@ namespace NekoSerialize
             }
             catch (Exception e)
             {
-                Debug.LogError($"[PlayerPrefsHandler] Error loading data: {e.Message}");
+                Debug.LogError($"[PlayerPrefsHandler] Error loading data: {e.Message.Colorize(Swatch.VR)}");
                 return new();
             }
         }
