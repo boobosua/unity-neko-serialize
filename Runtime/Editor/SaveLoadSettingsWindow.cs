@@ -11,7 +11,7 @@ namespace NekoSerialize
         private SerializedObject _serializedSettings;
         private Vector2 _scrollPosition;
 
-        [MenuItem("Tools/Neko Indie/Save Load Settings")]
+        [MenuItem("Tools/Neko Indie/Serialize/Settings")]
         public static void ShowWindow()
         {
             var window = GetWindow<SaveLoadSettingsWindow>("Save Load Settings");

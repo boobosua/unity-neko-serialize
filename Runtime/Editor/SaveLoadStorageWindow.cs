@@ -25,13 +25,10 @@ namespace NekoSerialize
         private readonly string[] tabs = { "Data View", "JSON View" };
         private string rawJsonData = "";
 
-        // Cache for tab background texture
-        private static Texture2D selectedTabTexture;
-
-        [MenuItem("Tools/Neko Indie/Save Load Storage")]
+        [MenuItem("Tools/Neko Indie/Serialize/Client Data")]
         private static void OpenWindow()
         {
-            GetWindow<SaveLoadStorageWindow>("Save Load Storage").Show();
+            GetWindow<SaveLoadStorageWindow>("Client Data").Show();
         }
 
         void OnEnable()
@@ -93,11 +90,24 @@ namespace NekoSerialize
 
         private void DrawTabs()
         {
+            // Store original background color
+            Color originalBgColor = GUI.backgroundColor;
+
             EditorGUILayout.BeginHorizontal();
             GUILayout.Space(10);
 
             for (int i = 0; i < tabs.Length; i++)
             {
+                // Set background color before creating style
+                if (i == selectedTab)
+                {
+                    GUI.backgroundColor = new Color(0.4f, 0.6f, 1.0f, 1f);
+                }
+                else
+                {
+                    GUI.backgroundColor = originalBgColor;
+                }
+
                 var tabStyle = CreateTabStyle(i == selectedTab);
 
                 if (GUILayout.Button(tabs[i], tabStyle, GUILayout.Height(35), GUILayout.Width(120)))
@@ -112,6 +122,9 @@ namespace NekoSerialize
             GUILayout.Space(10);
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.Space();
+
+            // Restore original background color
+            GUI.backgroundColor = originalBgColor;
         }
 
         private GUIStyle CreateTabStyle(bool isSelected)
@@ -122,22 +135,43 @@ namespace NekoSerialize
 
             if (isSelected)
             {
-                if (selectedTabTexture == null)
-                {
-                    selectedTabTexture = new Texture2D(1, 1);
-                    selectedTabTexture.SetPixel(0, 0, new Color(0.2f, 0.4f, 0.8f, 1f));
-                    selectedTabTexture.Apply();
-                }
-
-                tabStyle.normal.background = selectedTabTexture;
+                // White text for selected tab (background already set in DrawTabs)
                 tabStyle.normal.textColor = Color.white;
+                tabStyle.hover.textColor = Color.white;
+                tabStyle.active.textColor = Color.white;
             }
             else
             {
-                tabStyle.normal.textColor = Color.gray;
+                // Use system text color for better theme compatibility
+                tabStyle.normal.textColor = EditorStyles.label.normal.textColor;
             }
 
             return tabStyle;
+        }
+
+        private void DrawRedButton(string text, System.Action onClickAction, params GUILayoutOption[] options)
+        {
+            // Store original background color
+            Color originalBgColor = GUI.backgroundColor;
+
+            // Set lighter, more noticeable red background color
+            GUI.backgroundColor = new Color(1.0f, 0.4f, 0.4f, 1f);
+
+            // Create style with white text
+            var redStyle = new GUIStyle(GUI.skin.button);
+            redStyle.fontSize = 12;
+            redStyle.fontStyle = FontStyle.Bold;
+            redStyle.normal.textColor = Color.white;
+            redStyle.hover.textColor = Color.white;
+            redStyle.active.textColor = Color.white;
+
+            if (GUILayout.Button(text, redStyle, options))
+            {
+                onClickAction?.Invoke();
+            }
+
+            // Restore original background color
+            GUI.backgroundColor = originalBgColor;
         }
 
         private void DrawContent()
@@ -176,11 +210,10 @@ namespace NekoSerialize
                     RefreshJsonView(); // Use direct storage refresh for JSON View
             }
 
-            // Delete All only available in play mode for Data View
+            // Delete All only available in play mode for Data View - RED BUTTON
             if (selectedTab == 0 && Application.isPlaying && SaveLoadService.IsInitialized)
             {
-                if (GUILayout.Button("Delete All", GUILayout.Height(30)))
-                    DeleteAll();
+                DrawRedButton("Delete All", DeleteAll, GUILayout.Height(30));
             }
 
             // Copy button available for JSON view when there's data
@@ -400,11 +433,113 @@ namespace NekoSerialize
             }
             catch (System.Exception)
             {
-                // If JSON fails, show raw data
+                // If JSON fails, try to determine the type and show meaningful information
                 EditorGUI.indentLevel++;
-                EditorGUILayout.LabelField("Raw Data", obj.ToString());
+                string typeName = GetReadableTypeName(obj);
+                string valueDisplay = GetReadableValueDisplay(obj);
+                EditorGUILayout.LabelField($"{typeName}:", valueDisplay);
                 EditorGUI.indentLevel--;
             }
+        }
+
+        private string GetReadableTypeName(object obj)
+        {
+            if (obj == null) return "Null";
+
+            System.Type type = obj.GetType();
+
+            // Handle common Unity types
+            if (type == typeof(Vector2)) return "Vector2";
+            if (type == typeof(Vector3)) return "Vector3";
+            if (type == typeof(Vector4)) return "Vector4";
+            if (type == typeof(Quaternion)) return "Quaternion";
+            if (type == typeof(Color)) return "Color";
+            if (type == typeof(Color32)) return "Color32";
+
+            // Handle primitive types
+            if (type == typeof(int)) return "Integer";
+            if (type == typeof(float)) return "Float";
+            if (type == typeof(double)) return "Double";
+            if (type == typeof(bool)) return "Boolean";
+            if (type == typeof(string)) return "String";
+            if (type == typeof(System.DateTime)) return "DateTime";
+
+            // Handle collections
+            if (type.IsArray) return $"{GetElementTypeName(type.GetElementType())} Array";
+            if (type.IsGenericType)
+            {
+                var genericDef = type.GetGenericTypeDefinition();
+                if (genericDef == typeof(List<>))
+                    return $"{GetElementTypeName(type.GetGenericArguments()[0])} List";
+                if (genericDef == typeof(Dictionary<,>))
+                {
+                    var args = type.GetGenericArguments();
+                    return $"Dictionary<{GetElementTypeName(args[0])}, {GetElementTypeName(args[1])}>";
+                }
+            }
+
+            // Check if it's a Newtonsoft.Json.Linq object (from deserialized JSON)
+            if (type.Namespace == "Newtonsoft.Json.Linq")
+            {
+                if (type.Name == "JObject") return "Object";
+                if (type.Name == "JArray") return "Array";
+                if (type.Name == "JValue") return "Value";
+            }
+
+            // For custom classes, use the class name
+            return ObjectNames.NicifyVariableName(type.Name);
+        }
+
+        private string GetElementTypeName(System.Type elementType)
+        {
+            if (elementType == null) return "Unknown";
+            if (elementType == typeof(int)) return "int";
+            if (elementType == typeof(float)) return "float";
+            if (elementType == typeof(string)) return "string";
+            if (elementType == typeof(bool)) return "bool";
+            return ObjectNames.NicifyVariableName(elementType.Name);
+        }
+
+        private string GetReadableValueDisplay(object obj)
+        {
+            if (obj == null) return "null";
+
+            System.Type type = obj.GetType();
+
+            // Handle Unity types with special formatting
+            if (type == typeof(Vector2))
+            {
+                var v = (Vector2)obj;
+                return $"({v.x:F3}, {v.y:F3})";
+            }
+            if (type == typeof(Vector3))
+            {
+                var v = (Vector3)obj;
+                return $"({v.x:F3}, {v.y:F3}, {v.z:F3})";
+            }
+            if (type == typeof(Vector4))
+            {
+                var v = (Vector4)obj;
+                return $"({v.x:F3}, {v.y:F3}, {v.z:F3}, {v.w:F3})";
+            }
+            if (type == typeof(Quaternion))
+            {
+                var q = (Quaternion)obj;
+                return $"({q.x:F3}, {q.y:F3}, {q.z:F3}, {q.w:F3})";
+            }
+            if (type == typeof(Color))
+            {
+                var c = (Color)obj;
+                return $"RGBA({c.r:F3}, {c.g:F3}, {c.b:F3}, {c.a:F3})";
+            }
+
+            // Handle collections with count info
+            if (obj is System.Collections.ICollection collection)
+                return $"[{collection.Count} items]";
+
+            // For everything else, use ToString but limit length
+            string str = obj.ToString();
+            return str.Length > 100 ? str.Substring(0, 97) + "..." : str;
         }
 
         private bool IsVector2(object value)
