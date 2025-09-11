@@ -81,6 +81,15 @@ namespace NekoSerialize
         }
 
         /// <summary>
+        /// Unregisters and disposes all components.
+        /// </summary>
+        public void DisposeAllComponents()
+        {
+            StopAutoSave();
+            _saveableComponents.Clear();
+        }
+
+        /// <summary>
         /// Starts the auto-save coroutine.
         /// </summary>
         private void StartAutoSave(SaveLoadSettings settings)
