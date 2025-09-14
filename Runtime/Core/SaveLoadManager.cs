@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using NekoLib.Core;
 using NekoLib.Utilities;
@@ -8,85 +7,23 @@ namespace NekoSerialize
 {
     public sealed class SaveLoadManager : PersistentSingleton<SaveLoadManager>
     {
-        [SerializeField] private SaveLoadSettings _settings;
-        private readonly List<ISaveableComponent> _saveableComponents = new();
+        private SaveLoadSettings _settings;
         private Coroutine _autoSaveCoroutine;
 
-#if UNITY_EDITOR
-        protected override void OnValidate()
+        public void Initialize(SaveLoadSettings settings)
         {
-            base.OnValidate();
-
-            if (_settings == null)
+            if (settings == null)
             {
-                _settings = Resources.Load<SaveLoadSettings>("SaveLoadSettings");
+                Debug.LogError("[SaveLoadManager] Provided settings are null. Initialization aborted.");
+                return;
             }
-        }
-#endif
 
-        private void Start()
-        {
+            _settings = settings;
+
             if (_settings != null && _settings.AutoSaveInterval > 0f)
             {
                 StartAutoSave(_settings);
             }
-        }
-
-        /// <summary>
-        /// Registers a saveable component with the manager.
-        /// </summary>
-        public void RegisterSaveableComponent(ISaveableComponent saveable)
-        {
-            if (!_saveableComponents.Contains(saveable))
-            {
-                _saveableComponents.Add(saveable);
-
-                if (saveable.AutoLoad)
-                {
-                    saveable.Load();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Unregister a saveable component from the manager.
-        /// </summary>
-        public void UnregisterSaveableComponent(ISaveableComponent saveable)
-        {
-            if (_saveableComponents.Contains(saveable))
-            {
-                if (saveable.AutoSave)
-                {
-                    saveable.Save();
-                }
-
-                _saveableComponents.Remove(saveable);
-            }
-        }
-
-        /// <summary>
-        /// Triggers save for all registered components via SaveLoadService.
-        /// </summary>
-        public void SaveAllComponents()
-        {
-            foreach (var component in _saveableComponents)
-            {
-                if (component.AutoSave)
-                {
-                    component.Save(); // Each component handles its own save logic
-                }
-            }
-
-            NSR.SaveAll();
-        }
-
-        /// <summary>
-        /// Unregisters and disposes all components.
-        /// </summary>
-        public void DisposeAllComponents()
-        {
-            StopAutoSave();
-            _saveableComponents.Clear();
         }
 
         /// <summary>
@@ -118,7 +55,7 @@ namespace NekoSerialize
             while (true)
             {
                 yield return Utils.GetWaitForSeconds(settings.AutoSaveInterval);
-                SaveAllComponents();
+                NSR.SaveAll();
             }
         }
 
@@ -126,7 +63,7 @@ namespace NekoSerialize
         {
             if (pauseStatus && _settings != null && _settings.AutoSaveOnPause)
             {
-                SaveAllComponents();
+                NSR.SaveAll();
             }
         }
 
@@ -134,15 +71,8 @@ namespace NekoSerialize
         {
             if (!hasFocus && _settings != null && _settings.AutoSaveOnFocusLost)
             {
-                SaveAllComponents();
+                NSR.SaveAll();
             }
-        }
-
-        protected override void OnApplicationQuit()
-        {
-            StopAutoSave();
-            SaveAllComponents();
-            base.OnApplicationQuit();
         }
     }
 }

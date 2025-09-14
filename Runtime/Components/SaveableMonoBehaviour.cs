@@ -38,15 +38,12 @@ namespace NekoSerialize
 
         protected virtual void Start()
         {
-            SaveLoadManager.Instance.RegisterSaveableComponent(this);
+            SaveLoadService.RegisterSaveableComponent(this);
         }
 
         protected virtual void OnDestroy()
         {
-            if (SaveLoadManager.HasInstance)
-            {
-                SaveLoadManager.Instance.UnregisterSaveableComponent(this);
-            }
+            SaveLoadService.UnregisterSaveableComponent(this);
         }
 
 #if UNITY_EDITOR

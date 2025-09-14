@@ -25,6 +25,7 @@ namespace NekoSerialize
         private const string LastSaveTimeKey = "LastSaveTime";
 
         private static Dictionary<string, object> s_saveData = new();
+        private static readonly List<ISaveableComponent> s_saveableComponents = new();
         private static SaveDataHandler s_dataHandler;
         private static SaveLoadSettings s_settings;
         private static bool s_isInitialized = false;
@@ -40,6 +41,7 @@ namespace NekoSerialize
             LoadSettings();
             InitializeDataHandler();
             LoadGame();
+            StartAutoSaveIfNeeded();
             s_isInitialized = true;
 
             Debug.Log("[SaveLoadService] Initialized successfully.");
@@ -56,6 +58,7 @@ namespace NekoSerialize
             LoadSettings();
             InitializeDataHandler();
             await LoadAllAsync();
+            StartAutoSaveIfNeeded();
             s_isInitialized = true;
 
             Debug.Log("[SaveLoadService] Initialized successfully.");
@@ -159,6 +162,74 @@ namespace NekoSerialize
         }
 
         /// <summary>
+        /// Registers a saveable component with the manager.
+        /// </summary>
+        public static void RegisterSaveableComponent(ISaveableComponent saveable)
+        {
+            if (!s_isInitialized)
+            {
+                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
+                return;
+            }
+
+            if (!s_saveableComponents.Contains(saveable))
+            {
+                s_saveableComponents.Add(saveable);
+
+                if (saveable.AutoLoad)
+                {
+                    saveable.Load();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Unregister a saveable component from the manager.
+        /// </summary>
+        public static void UnregisterSaveableComponent(ISaveableComponent saveable)
+        {
+            if (!s_isInitialized)
+            {
+                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
+                return;
+            }
+
+            if (s_saveableComponents.Contains(saveable))
+            {
+                if (saveable.AutoSave)
+                {
+                    saveable.Save();
+                }
+
+                s_saveableComponents.Remove(saveable);
+            }
+        }
+
+        /// <summary>
+        /// Determines if auto-save is enabled based on current settings.
+        /// </summary>
+        private static bool AutoSaveEnabled()
+        {
+            if (s_settings == null)
+                return false;
+
+            return s_settings.AutoSaveInterval > 0f
+            || s_settings.AutoSaveOnPause
+            || s_settings.AutoSaveOnFocusLost;
+        }
+
+        /// <summary>
+        /// Start auto-save if enabled in settings.
+        /// </summary>
+        private static void StartAutoSaveIfNeeded()
+        {
+            if (AutoSaveEnabled())
+            {
+                SaveLoadManager.Instance.Initialize(s_settings);
+            }
+        }
+
+        /// <summary>
         /// Check if data exists for the specified key.
         /// </summary>
         public static bool HasData(string key)
@@ -197,6 +268,15 @@ namespace NekoSerialize
             {
                 Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
                 return;
+            }
+
+            // Save all registered components first.
+            foreach (var component in s_saveableComponents)
+            {
+                if (component.AutoSave)
+                {
+                    component.Save();
+                }
             }
 
             // Store last save time in Utc time - now safe from recursion
@@ -334,15 +414,7 @@ namespace NekoSerialize
 
             try
             {
-                // Save any pending data before cleanup.
-                if (SaveLoadManager.HasInstance)
-                {
-                    SaveLoadManager.Instance.SaveAllComponents();
-                }
-                else
-                {
-                    SaveAll();
-                }
+                SaveAll();
 
                 // Clear cached data.
                 s_saveData?.Clear();
