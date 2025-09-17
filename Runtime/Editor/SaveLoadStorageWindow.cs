@@ -809,7 +809,6 @@ namespace NekoSerialize
 
             if (EditorUtility.DisplayDialog(title, message, ok, cancel))
             {
-                SaveLoadManager.Instance.DisposeAllComponents();
                 SaveLoadService.DeleteAllData();
                 RestartGame();
             }
