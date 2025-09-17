@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace NekoSerialize
 {
-    [CreateAssetMenu(fileName = "SaveLoadSettings", menuName = "Neko Indie/Save Load Settings")]
+    [CreateAssetMenu(fileName = "SaveLoadSettings", menuName = "Neko Indie/Serialize/Save Load Settings")]
     public class SaveLoadSettings : ScriptableObject
     {
         [Header("Save Settings")]
