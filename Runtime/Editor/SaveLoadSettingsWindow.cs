@@ -1,6 +1,6 @@
 #if UNITY_EDITOR
-using UnityEngine;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace NekoSerialize
@@ -134,9 +134,8 @@ namespace NekoSerialize
             }
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Auto Save Settings", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Auto Save", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_serializedSettings.FindProperty("<AutoSaveInterval>k__BackingField"), new GUIContent("Auto Save Interval"));
-            EditorGUILayout.PropertyField(_serializedSettings.FindProperty("<AutoSaveOnPause>k__BackingField"), new GUIContent("Auto Save On Pause"));
             EditorGUILayout.PropertyField(_serializedSettings.FindProperty("<AutoSaveOnFocusLost>k__BackingField"), new GUIContent("Auto Save On Focus Lost"));
 
             EditorGUILayout.Space();

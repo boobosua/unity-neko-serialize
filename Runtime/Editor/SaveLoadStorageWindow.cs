@@ -1,10 +1,10 @@
 #if UNITY_EDITOR
 
-using UnityEngine;
-using UnityEditor;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
+using UnityEditor;
+using UnityEngine;
 
 namespace NekoSerialize
 {
@@ -12,9 +12,9 @@ namespace NekoSerialize
     {
         private Vector2 scrollPosition;
         private Vector2 jsonScrollPosition;
-        private Dictionary<string, object> currentSaveData = new Dictionary<string, object>();
-        private Dictionary<string, bool> foldoutStates = new Dictionary<string, bool>();
-        private Dictionary<string, bool> dictionaryFoldoutStates = new Dictionary<string, bool>();
+        private Dictionary<string, object> currentSaveData = new();
+        private readonly Dictionary<string, bool> foldoutStates = new();
+        private readonly Dictionary<string, bool> dictionaryFoldoutStates = new();
 
         // Pagination
         private int currentPage = 0;
@@ -25,16 +25,15 @@ namespace NekoSerialize
         private readonly string[] tabs = { "Data View", "JSON View" };
         private string rawJsonData = "";
 
-        [MenuItem("Tools/Neko Indie/Serialize/Client Data")]
+        [MenuItem("Tools/Neko Indie/Serialize/Local Save Data")]
         private static void OpenWindow()
         {
-            GetWindow<SaveLoadStorageWindow>("Client Data").Show();
+            GetWindow<SaveLoadStorageWindow>("Local Save Data").Show();
         }
 
         void OnEnable()
         {
             EditorApplication.update += OnEditorUpdate;
-            // Load JSON data initially for JSON view
             RefreshJsonView();
         }
 
@@ -374,8 +373,10 @@ namespace NekoSerialize
         {
             try
             {
-                string json = JsonConvert.SerializeObject(obj, Formatting.Indented);
-                var jsonObj = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+                // Use shared UnityJsonSettings to ensure custom converters & loop handling apply consistently
+                var settings = UnityJsonSettings.CreateSettings();
+                string json = JsonConvert.SerializeObject(obj, settings);
+                var jsonObj = JsonConvert.DeserializeObject<Dictionary<string, object>>(json, settings);
 
                 EditorGUI.indentLevel++;
                 foreach (var kvp in jsonObj)
@@ -701,7 +702,8 @@ namespace NekoSerialize
                 var directData = GetDirectStorageData();
                 if (directData.Count > 0)
                 {
-                    rawJsonData = JsonConvert.SerializeObject(directData, Formatting.Indented);
+                    var settings = UnityJsonSettings.CreateSettings();
+                    rawJsonData = JsonConvert.SerializeObject(directData, settings);
                 }
                 else
                 {
@@ -749,7 +751,8 @@ namespace NekoSerialize
                     if (!string.IsNullOrEmpty(json))
                     {
                         // Decrypt if necessary (simplified - we'll skip encryption handling for now)
-                        var data = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+                        var jsonSettings = UnityJsonSettings.CreateSettings();
+                        var data = JsonConvert.DeserializeObject<Dictionary<string, object>>(json, jsonSettings);
                         return data ?? new Dictionary<string, object>();
                     }
                 }
@@ -773,7 +776,8 @@ namespace NekoSerialize
                     if (!string.IsNullOrEmpty(json))
                     {
                         // Decrypt if necessary (simplified - we'll skip encryption handling for now)
-                        var data = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+                        var jsonSettings = UnityJsonSettings.CreateSettings();
+                        var data = JsonConvert.DeserializeObject<Dictionary<string, object>>(json, jsonSettings);
                         return data ?? new Dictionary<string, object>();
                     }
                 }
@@ -789,7 +793,8 @@ namespace NekoSerialize
         {
             try
             {
-                rawJsonData = JsonConvert.SerializeObject(currentSaveData, Formatting.Indented);
+                var settings = UnityJsonSettings.CreateSettings();
+                rawJsonData = JsonConvert.SerializeObject(currentSaveData, settings);
             }
             catch (System.Exception e)
             {

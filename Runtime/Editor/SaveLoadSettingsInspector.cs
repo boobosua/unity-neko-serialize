@@ -1,6 +1,6 @@
 #if UNITY_EDITOR
-using UnityEngine;
 using UnityEditor;
+using UnityEngine;
 
 namespace NekoSerialize
 {
@@ -12,7 +12,6 @@ namespace NekoSerialize
         private SerializedProperty _folderNameProp;
         private SerializedProperty _playerPrefsKeyProp;
         private SerializedProperty _autoSaveIntervalProp;
-        private SerializedProperty _autoSaveOnPauseProp;
         private SerializedProperty _autoSaveOnFocusLostProp;
         private SerializedProperty _useEncryptionProp;
         private SerializedProperty _encryptionKeyProp;
@@ -25,7 +24,6 @@ namespace NekoSerialize
             _folderNameProp = serializedObject.FindProperty("<FolderName>k__BackingField");
             _playerPrefsKeyProp = serializedObject.FindProperty("<PlayerPrefsKey>k__BackingField");
             _autoSaveIntervalProp = serializedObject.FindProperty("<AutoSaveInterval>k__BackingField");
-            _autoSaveOnPauseProp = serializedObject.FindProperty("<AutoSaveOnPause>k__BackingField");
             _autoSaveOnFocusLostProp = serializedObject.FindProperty("<AutoSaveOnFocusLost>k__BackingField");
             _useEncryptionProp = serializedObject.FindProperty("<UseEncryption>k__BackingField");
             _encryptionKeyProp = serializedObject.FindProperty("<EncryptionKey>k__BackingField");
@@ -34,9 +32,6 @@ namespace NekoSerialize
 
         public override void OnInspectorGUI()
         {
-            // Don't draw the default inspector (this hides the script field)
-            // base.OnInspectorGUI();
-
             serializedObject.Update();
 
             EditorGUILayout.LabelField("Save Settings", EditorStyles.boldLabel);
@@ -59,9 +54,8 @@ namespace NekoSerialize
             }
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Auto Save Settings", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Auto Save", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_autoSaveIntervalProp, new GUIContent("Auto Save Interval"));
-            EditorGUILayout.PropertyField(_autoSaveOnPauseProp, new GUIContent("Auto Save On Pause"));
             EditorGUILayout.PropertyField(_autoSaveOnFocusLostProp, new GUIContent("Auto Save On Focus Lost"));
 
             EditorGUILayout.Space();

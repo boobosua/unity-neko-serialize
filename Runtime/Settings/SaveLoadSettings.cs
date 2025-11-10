@@ -29,10 +29,7 @@ namespace NekoSerialize
         [field: SerializeField, Tooltip("Whether to pretty print JSON data.")]
         public bool PrettyPrintJson { get; private set; } = true;
 
-        [Header("Auto Save/Load")]
-        [field: SerializeField, Tooltip("Whether to automatically save game data when the game is paused.")]
-        public bool AutoSaveOnPause { get; private set; } = false;
-
+        [Header("Auto-Save")]
         [field: SerializeField, Tooltip("Whether to automatically save game data when the game loses focus.")]
         public bool AutoSaveOnFocusLost { get; private set; } = false;
 

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace NekoSerialize
@@ -51,7 +52,7 @@ namespace NekoSerialize
         {
             if (string.IsNullOrEmpty(_saveKey))
             {
-                _saveKey = $"{gameObject.name}_{GetType().Name}_{GetInstanceID()}";
+                _saveKey = $"{gameObject.name}_{GetType().Name}_{Guid.NewGuid()}";
             }
         }
 #endif

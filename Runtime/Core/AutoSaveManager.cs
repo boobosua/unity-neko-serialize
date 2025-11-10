@@ -1,11 +1,12 @@
 using System.Collections;
-using UnityEngine;
 using NekoLib.Core;
+using NekoLib.Logger;
 using NekoLib.Utilities;
+using UnityEngine;
 
 namespace NekoSerialize
 {
-    public sealed class SaveLoadManager : PersistentSingleton<SaveLoadManager>
+    public sealed class AutoSaveManager : PersistentSingleton<AutoSaveManager>
     {
         private SaveLoadSettings _settings;
         private Coroutine _autoSaveCoroutine;
@@ -14,7 +15,7 @@ namespace NekoSerialize
         {
             if (settings == null)
             {
-                Debug.LogError("[SaveLoadManager] Provided settings are null. Initialization aborted.");
+                Log.Error("[AutoSaveManager] Provided settings are null. Initialization aborted.");
                 return;
             }
 
@@ -55,14 +56,6 @@ namespace NekoSerialize
             while (true)
             {
                 yield return Utils.GetWaitForSeconds(settings.AutoSaveInterval);
-                NSR.SaveAll();
-            }
-        }
-
-        private void OnApplicationPause(bool pauseStatus)
-        {
-            if (pauseStatus && _settings != null && _settings.AutoSaveOnPause)
-            {
                 NSR.SaveAll();
             }
         }

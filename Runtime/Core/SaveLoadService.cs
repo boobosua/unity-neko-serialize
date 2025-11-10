@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using UnityEngine;
-using Newtonsoft.Json.Linq;
-using NekoLib.Services;
-using NekoLib.Extensions;
 using NekoLib.Core;
+using NekoLib.Extensions;
+using NekoLib.Logger;
+using NekoLib.Services;
 using NekoLib.Utilities;
+using Newtonsoft.Json.Linq;
+using UnityEngine;
 
 namespace NekoSerialize
 {
@@ -44,7 +45,7 @@ namespace NekoSerialize
             StartAutoSaveIfNeeded();
             s_isInitialized = true;
 
-            Debug.Log("[SaveLoadService] Initialized successfully.");
+            Log.Info("[SaveLoadService] Initialized successfully.");
         }
 
         /// <summary>
@@ -61,7 +62,7 @@ namespace NekoSerialize
             StartAutoSaveIfNeeded();
             s_isInitialized = true;
 
-            Debug.Log("[SaveLoadService] Initialized successfully.");
+            Log.Info("[SaveLoadService] Initialized successfully.");
         }
 
         /// <summary>
@@ -72,7 +73,7 @@ namespace NekoSerialize
             s_settings = Resources.Load<SaveLoadSettings>("SaveLoadSettings");
             if (s_settings == null)
             {
-                Debug.LogWarning("[SaveLoadService] No SaveLoadSettings found in Resources folder. Using default settings in memory.");
+                Log.Warn("[SaveLoadService] No SaveLoadSettings found in Resources folder. Using default settings in memory.");
                 s_settings = ScriptableObject.CreateInstance<SaveLoadSettings>();
             }
         }
@@ -97,7 +98,7 @@ namespace NekoSerialize
         {
             if (!s_isInitialized)
             {
-                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
+                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
                 return;
             }
             s_saveData[key] = data;
@@ -110,7 +111,7 @@ namespace NekoSerialize
         {
             if (!s_isInitialized)
             {
-                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
+                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
                 return;
             }
             s_saveData[key] = data;
@@ -124,7 +125,7 @@ namespace NekoSerialize
         {
             if (!s_isInitialized)
             {
-                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
+                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
                 return defaultValue;
             }
             if (s_saveData.TryGetValue(key, out var data))
@@ -153,11 +154,11 @@ namespace NekoSerialize
                 }
                 catch (Exception e)
                 {
-                    Debug.LogWarning($"[SaveLoadService] Error loading data for key: {key.Colorize(Swatch.VR)}, Exception: {e}.");
+                    Log.Warn($"[SaveLoadService] Error loading data for key: {key.Colorize(Swatch.VR)}, Exception: {e}.");
                 }
             }
 
-            Debug.LogWarning($"[SaveLoadService] No data found for key: {key.Colorize(Swatch.VR)}. Returning default value.");
+            Log.Warn($"[SaveLoadService] No data found for key: {key.Colorize(Swatch.VR)}. Returning default value.");
             return defaultValue;
         }
 
@@ -168,7 +169,7 @@ namespace NekoSerialize
         {
             if (!s_isInitialized)
             {
-                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
+                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
                 return;
             }
 
@@ -190,7 +191,7 @@ namespace NekoSerialize
         {
             if (!s_isInitialized)
             {
-                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
+                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
                 return;
             }
 
@@ -213,9 +214,7 @@ namespace NekoSerialize
             if (s_settings == null)
                 return false;
 
-            return s_settings.AutoSaveInterval > 0f
-            || s_settings.AutoSaveOnPause
-            || s_settings.AutoSaveOnFocusLost;
+            return s_settings.AutoSaveInterval > 0f || s_settings.AutoSaveOnFocusLost;
         }
 
         /// <summary>
@@ -225,7 +224,7 @@ namespace NekoSerialize
         {
             if (AutoSaveEnabled())
             {
-                SaveLoadManager.Instance.Initialize(s_settings);
+                AutoSaveManager.Instance.Initialize(s_settings);
             }
         }
 
@@ -236,7 +235,7 @@ namespace NekoSerialize
         {
             if (!s_isInitialized)
             {
-                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
+                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
                 return false;
             }
             return s_saveData.ContainsKey(key);
@@ -249,13 +248,13 @@ namespace NekoSerialize
         {
             if (!s_isInitialized)
             {
-                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
+                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
                 return;
             }
             if (s_saveData.ContainsKey(key))
             {
                 s_saveData.Remove(key);
-                Debug.Log($"[SaveLoadService] Deleted data for key: {key.Colorize(Swatch.DE)}");
+                Log.Info($"[SaveLoadService] Deleted data for key: {key.Colorize(Swatch.DE)}");
             }
         }
 
@@ -266,7 +265,7 @@ namespace NekoSerialize
         {
             if (!s_isInitialized)
             {
-                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
+                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
                 return;
             }
 
@@ -291,7 +290,7 @@ namespace NekoSerialize
         {
             if (!s_isInitialized)
             {
-                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
+                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
                 return;
             }
             s_saveData = s_dataHandler.LoadData();
@@ -304,7 +303,7 @@ namespace NekoSerialize
         {
             if (!s_isInitialized)
             {
-                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
+                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
                 return;
             }
             try
@@ -312,11 +311,11 @@ namespace NekoSerialize
                 Save(LastSaveTimeKey, DateTimeService.UtcNow);
                 var dataToSave = new Dictionary<string, object>(s_saveData);
                 await s_dataHandler.SaveDataAsync(dataToSave);
-                Debug.Log("[SaveLoadService] All data saved asynchronously");
+                Log.Info("[SaveLoadService] All data saved asynchronously");
             }
             catch (Exception e)
             {
-                Debug.LogError($"[SaveLoadService] Error during async save: {e.Message.Colorize(Swatch.VR)}");
+                Log.Error($"[SaveLoadService] Error during async save: {e.Message.Colorize(Swatch.VR)}");
             }
         }
 
@@ -327,18 +326,18 @@ namespace NekoSerialize
         {
             if (!s_isInitialized)
             {
-                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
+                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
                 return;
             }
             try
             {
                 var loadedData = await s_dataHandler.LoadDataAsync();
                 s_saveData = loadedData;
-                Debug.Log("[SaveLoadService] All data loaded asynchronously");
+                Log.Info("[SaveLoadService] All data loaded asynchronously");
             }
             catch (Exception e)
             {
-                Debug.LogError($"[SaveLoadService] Error during async load: {e.Message.Colorize(Swatch.VR)}");
+                Log.Error($"[SaveLoadService] Error during async load: {e.Message.Colorize(Swatch.VR)}");
                 s_saveData = new Dictionary<string, object>();
             }
         }
@@ -350,7 +349,7 @@ namespace NekoSerialize
         {
             if (!s_isInitialized)
             {
-                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
+                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
                 return false;
             }
             return s_dataHandler.SaveDataExists();
@@ -363,12 +362,12 @@ namespace NekoSerialize
         {
             if (!s_isInitialized)
             {
-                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
+                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
                 return;
             }
             s_dataHandler.DeleteSaveData();
             s_saveData.Clear();
-            Debug.Log("[SaveLoadService] All save data deleted");
+            Log.Info("[SaveLoadService] All save data deleted");
         }
 
         /// <summary>
@@ -414,6 +413,22 @@ namespace NekoSerialize
 
             try
             {
+                if (s_saveableComponents.Count > 0)
+                {
+                    for (int i = s_saveableComponents.Count - 1; i >= 0; i--)
+                    {
+                        var component = s_saveableComponents[i];
+                        if (component.AutoSave)
+                        {
+                            component.Save();
+                        }
+
+                        s_saveableComponents.RemoveAt(i);
+                    }
+
+                    s_saveableComponents.Clear();
+                }
+
                 SaveAll();
 
                 // Clear cached data.
@@ -425,11 +440,11 @@ namespace NekoSerialize
                 s_settings = null;
                 s_isInitialized = false;
 
-                Debug.Log("[SaveLoadService] Service disposed and cleaned up.");
+                Log.Info("[SaveLoadService] Service disposed and cleaned up.");
             }
             catch (Exception e)
             {
-                Debug.LogError($"[SaveLoadService] Error during disposal: {e.Message.Colorize(Swatch.VR)}");
+                Log.Error($"[SaveLoadService] Error during disposal: {e.Message.Colorize(Swatch.VR)}");
             }
         }
 
@@ -446,7 +461,7 @@ namespace NekoSerialize
         {
             if (!s_isInitialized)
             {
-                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() first.");
+                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() first.");
                 return new Dictionary<string, object>();
             }
             return new Dictionary<string, object>(s_saveData);
@@ -477,7 +492,7 @@ namespace NekoSerialize
         {
             if (!s_isInitialized)
             {
-                Debug.LogWarning("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
+                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
                 return null;
             }
             return s_settings;
@@ -490,7 +505,7 @@ namespace NekoSerialize
         {
             LoadSettings();
             InitializeDataHandler();
-            Debug.Log("[SaveLoadService] Settings refreshed");
+            Log.Info("[SaveLoadService] Settings refreshed");
         }
 #endif
     }

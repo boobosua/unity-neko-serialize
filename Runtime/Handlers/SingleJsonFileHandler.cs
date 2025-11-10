@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using UnityEngine;
 using NekoLib.Core;
 using NekoLib.Extensions;
+using NekoLib.Logger;
+using UnityEngine;
 
 namespace NekoSerialize
 {
@@ -25,11 +26,11 @@ namespace NekoSerialize
             {
                 var json = SerializeData(data);
                 File.WriteAllText(SavePath, json);
-                Debug.Log($"[SingleJsonFileHandler] Data saved to: {SavePath.Colorize(Swatch.DE)}");
+                Log.Info($"[SingleJsonFileHandler] Data saved to: {SavePath.Colorize(Swatch.DE)}");
             }
             catch (Exception e)
             {
-                Debug.LogError($"[SingleJsonFileHandler] Error saving data: {e.Message.Colorize(Swatch.VR)}");
+                Log.Error($"[SingleJsonFileHandler] Error saving data: {e.Message.Colorize(Swatch.VR)}");
             }
         }
 
@@ -44,18 +45,18 @@ namespace NekoSerialize
                 {
                     var json = File.ReadAllText(SavePath);
                     var data = DeserializeData<Dictionary<string, object>>(json);
-                    Debug.Log($"[SingleJsonFileHandler] Data loaded from: {SavePath.Colorize(Swatch.DE)}");
+                    Log.Info($"[SingleJsonFileHandler] Data loaded from: {SavePath.Colorize(Swatch.DE)}");
                     return data ?? new();
                 }
                 else
                 {
-                    Debug.LogWarning($"[SingleJsonFileHandler] No save file found, starting fresh.");
+                    Log.Warn($"[SingleJsonFileHandler] No save file found, starting fresh.");
                     return new();
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"[SingleJsonFileHandler] Error loading data: {e.Message.Colorize(Swatch.VR)}");
+                Log.Error($"[SingleJsonFileHandler] Error loading data: {e.Message.Colorize(Swatch.VR)}");
                 return new();
             }
         }
@@ -68,7 +69,7 @@ namespace NekoSerialize
             if (File.Exists(SavePath))
             {
                 File.Delete(SavePath);
-                Debug.Log($"[SingleJsonFileHandler] Save file deleted.");
+                Log.Info($"[SingleJsonFileHandler] Save file deleted.");
             }
         }
 

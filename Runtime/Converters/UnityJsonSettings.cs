@@ -16,7 +16,9 @@ namespace NekoSerialize
             var settings = new JsonSerializerSettings
             {
                 Formatting = Formatting.Indented,
-                NullValueHandling = NullValueHandling.Ignore
+                NullValueHandling = NullValueHandling.Ignore,
+                // Prevents issues like: "Self referencing loop detected for property 'normalized' with type 'UnityEngine.Vector3'"
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
             };
 
             // Add Unity type converters
