@@ -21,7 +21,7 @@ namespace NekoSerialize
 
             _settings = settings;
 
-            if (_settings != null && _settings.AutoSaveInterval > 0f)
+            if (_settings.AutoSaveInterval > 0f)
             {
                 StartAutoSave(_settings);
             }

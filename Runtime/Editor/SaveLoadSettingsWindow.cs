@@ -181,13 +181,7 @@ namespace NekoSerialize
 
                 if (GUILayout.Button("Save All"))
                 {
-                    NSR.SaveAll();
-                }
-
-                if (GUILayout.Button("Load All"))
-                {
-                    NSR.LoadAll();
-                    ReloadScene();
+                    SaveLoadService.SaveAll();
                 }
 
                 EditorGUILayout.EndHorizontal();
@@ -200,7 +194,7 @@ namespace NekoSerialize
                         "Are you sure you want to delete all save data and reload the scene? This cannot be undone.",
                         "Delete & Reload", "Cancel"))
                     {
-                        NSR.ClearAll();
+                        SaveLoadService.DeleteAllData();
                         ReloadScene();
                     }
                 }

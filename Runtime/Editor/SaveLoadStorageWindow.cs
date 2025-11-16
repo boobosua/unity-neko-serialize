@@ -89,64 +89,11 @@ namespace NekoSerialize
 
         private void DrawTabs()
         {
-            // Store original background color
-            Color originalBgColor = GUI.backgroundColor;
-
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.Space(10);
-
-            for (int i = 0; i < tabs.Length; i++)
-            {
-                // Set background color before creating style
-                if (i == selectedTab)
-                {
-                    GUI.backgroundColor = new Color(0.4f, 0.6f, 1.0f, 1f);
-                }
-                else
-                {
-                    GUI.backgroundColor = originalBgColor;
-                }
-
-                var tabStyle = CreateTabStyle(i == selectedTab);
-
-                if (GUILayout.Button(tabs[i], tabStyle, GUILayout.Height(35), GUILayout.Width(120)))
-                {
-                    selectedTab = i;
-                }
-
-                if (i < tabs.Length - 1)
-                    GUILayout.Space(5);
-            }
-
-            GUILayout.Space(10);
-            EditorGUILayout.EndHorizontal();
-            EditorGUILayout.Space();
-
-            // Restore original background color
-            GUI.backgroundColor = originalBgColor;
+            // Use unified tab bar style
+            selectedTab = NekoLib.Core.NekoEditorTabBar.Draw(selectedTab, tabs, 24f);
         }
 
-        private GUIStyle CreateTabStyle(bool isSelected)
-        {
-            var tabStyle = new GUIStyle(GUI.skin.button);
-            tabStyle.fontSize = 12;
-            tabStyle.fontStyle = FontStyle.Bold;
-
-            if (isSelected)
-            {
-                // White text for selected tab (background already set in DrawTabs)
-                tabStyle.normal.textColor = Color.white;
-                tabStyle.hover.textColor = Color.white;
-                tabStyle.active.textColor = Color.white;
-            }
-            else
-            {
-                // Use system text color for better theme compatibility
-                tabStyle.normal.textColor = EditorStyles.label.normal.textColor;
-            }
-
-            return tabStyle;
-        }
+        // Legacy style method removed; unified tab bar used instead
 
         private void DrawRedButton(string text, System.Action onClickAction, params GUILayoutOption[] options)
         {
@@ -374,7 +321,7 @@ namespace NekoSerialize
             try
             {
                 // Use shared UnityJsonSettings to ensure custom converters & loop handling apply consistently
-                var settings = UnityJsonSettings.CreateSettings();
+                var settings = JsonSerializerUtils.GetSettings();
                 string json = JsonConvert.SerializeObject(obj, settings);
                 var jsonObj = JsonConvert.DeserializeObject<Dictionary<string, object>>(json, settings);
 
@@ -702,7 +649,7 @@ namespace NekoSerialize
                 var directData = GetDirectStorageData();
                 if (directData.Count > 0)
                 {
-                    var settings = UnityJsonSettings.CreateSettings();
+                    var settings = JsonSerializerUtils.GetSettings();
                     rawJsonData = JsonConvert.SerializeObject(directData, settings);
                 }
                 else
@@ -751,7 +698,7 @@ namespace NekoSerialize
                     if (!string.IsNullOrEmpty(json))
                     {
                         // Decrypt if necessary (simplified - we'll skip encryption handling for now)
-                        var jsonSettings = UnityJsonSettings.CreateSettings();
+                        var jsonSettings = JsonSerializerUtils.GetSettings();
                         var data = JsonConvert.DeserializeObject<Dictionary<string, object>>(json, jsonSettings);
                         return data ?? new Dictionary<string, object>();
                     }
@@ -776,7 +723,7 @@ namespace NekoSerialize
                     if (!string.IsNullOrEmpty(json))
                     {
                         // Decrypt if necessary (simplified - we'll skip encryption handling for now)
-                        var jsonSettings = UnityJsonSettings.CreateSettings();
+                        var jsonSettings = JsonSerializerUtils.GetSettings();
                         var data = JsonConvert.DeserializeObject<Dictionary<string, object>>(json, jsonSettings);
                         return data ?? new Dictionary<string, object>();
                     }
@@ -793,7 +740,7 @@ namespace NekoSerialize
         {
             try
             {
-                var settings = UnityJsonSettings.CreateSettings();
+                var settings = JsonSerializerUtils.GetSettings();
                 rawJsonData = JsonConvert.SerializeObject(currentSaveData, settings);
             }
             catch (System.Exception e)

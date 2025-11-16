@@ -6,19 +6,27 @@ namespace NekoSerialize
     public static class NSR
     {
         /// <summary>
+        /// Initializes the NekoSerialize SaveLoadService.
+        /// </summary>
+        public static void Initialize()
+        {
+            SaveLoadService.Initialize();
+        }
+
+        /// <summary>
+        /// Asynchronously initializes the NekoSerialize SaveLoadService.
+        /// </summary>
+        public static async Task InitializeAsync()
+        {
+            await SaveLoadService.InitializeAsync();
+        }
+
+        /// <summary>
         /// Saves the specified data to memory cache. Use SaveAll() to persist to storage.
         /// </summary>
         public static void Save<T>(string key, T data)
         {
             SaveLoadService.Save(key, data);
-        }
-
-        /// <summary>
-        /// Saves data directly to persistent storage immediately.
-        /// </summary>
-        public static void SaveDirect<T>(string key, T data)
-        {
-            SaveLoadService.SaveDirect(key, data);
         }
 
         /// <summary>
@@ -62,27 +70,11 @@ namespace NekoSerialize
         }
 
         /// <summary>
-        /// Loads all data from persistent storage.
-        /// </summary>
-        public static void LoadAll()
-        {
-            SaveLoadService.LoadAll();
-        }
-
-        /// <summary>
         /// Saves all data asynchronously.
         /// </summary>
         public static async Task SaveAllAsync()
         {
             await SaveLoadService.SaveAllAsync();
-        }
-
-        /// <summary>
-        /// Loads all data asynchronously.
-        /// </summary>
-        public static async Task LoadAllAsync()
-        {
-            await SaveLoadService.LoadAllAsync();
         }
 
         /// <summary>

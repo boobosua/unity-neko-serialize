@@ -9,10 +9,13 @@ namespace NekoSerialize
     public abstract class SaveDataHandler
     {
         protected SaveLoadSettings _settings;
+        protected JsonSerializerSettings _jsonSettings;
 
         public SaveDataHandler(SaveLoadSettings settings)
         {
             _settings = settings;
+            _jsonSettings = JsonSerializerUtils.GetSettings();
+            _jsonSettings.Formatting = _settings.PrettyPrintJson ? Formatting.Indented : Formatting.None;
         }
 
         public abstract void SaveData(Dictionary<string, object> data);
@@ -41,14 +44,7 @@ namespace NekoSerialize
         /// </summary>
         protected string SerializeData(object data)
         {
-            var jsonSettings = UnityJsonSettings.CreateSettings();
-
-            // Override formatting based on settings
-            jsonSettings.Formatting = _settings.PrettyPrintJson ? Formatting.Indented : Formatting.None;
-            jsonSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
-            jsonSettings.NullValueHandling = NullValueHandling.Ignore;
-
-            var json = JsonConvert.SerializeObject(data, jsonSettings);
+            var json = JsonConvert.SerializeObject(data, _jsonSettings);
 
             if (_settings.UseEncryption)
             {
@@ -68,7 +64,7 @@ namespace NekoSerialize
                 json = DecryptString(json);
             }
 
-            return JsonConvert.DeserializeObject<T>(json, UnityJsonSettings.CreateSettings());
+            return JsonConvert.DeserializeObject<T>(json, _jsonSettings) ?? default;
         }
 
         /// <summary>

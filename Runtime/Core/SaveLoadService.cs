@@ -13,20 +13,12 @@ namespace NekoSerialize
 {
     /// <summary>
     /// Core save/load service with separated memory and storage operations.
-    /// 
-    /// Architecture:
-    /// - Save<T>(): Memory-only operations (fast, no I/O)
-    /// - SaveDirect<T>(): Direct storage operations (immediate I/O)
-    /// - SaveAll(): Batch write all cached data to storage
-    /// 
-    /// This separation prevents recursion bugs and gives better control over I/O operations.
     /// </summary>
     public static class SaveLoadService
     {
         private const string LastSaveTimeKey = "LastSaveTime";
 
         private static Dictionary<string, object> s_saveData = new();
-        private static readonly List<ISaveableComponent> s_saveableComponents = new();
         private static SaveDataHandler s_dataHandler;
         private static SaveLoadSettings s_settings;
         private static bool s_isInitialized = false;
@@ -41,7 +33,7 @@ namespace NekoSerialize
 
             LoadSettings();
             InitializeDataHandler();
-            LoadGame();
+            LoadAll();
             StartAutoSaveIfNeeded();
             s_isInitialized = true;
 
@@ -92,28 +84,23 @@ namespace NekoSerialize
         }
 
         /// <summary>
-        /// Save data to memory cache only. Use SaveAll() or SaveDirect() to persist to storage.
+        /// Ensure the service is initialized.
         /// </summary>
-        public static void Save<T>(string key, T data)
+        private static void EnsureInitialized()
         {
             if (!s_isInitialized)
             {
-                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
-                return;
+                Initialize();
             }
-            s_saveData[key] = data;
         }
 
         /// <summary>
         /// Save data directly to persistent storage immediately.
         /// </summary>
-        public static void SaveDirect<T>(string key, T data)
+        public static void Save<T>(string key, T data)
         {
-            if (!s_isInitialized)
-            {
-                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
-                return;
-            }
+            EnsureInitialized();
+
             s_saveData[key] = data;
             s_dataHandler.SaveData(s_saveData);
         }
@@ -123,11 +110,8 @@ namespace NekoSerialize
         /// </summary>
         public static T Load<T>(string key, T defaultValue = default)
         {
-            if (!s_isInitialized)
-            {
-                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
-                return defaultValue;
-            }
+            EnsureInitialized();
+
             if (s_saveData.TryGetValue(key, out var data))
             {
                 try
@@ -140,16 +124,11 @@ namespace NekoSerialize
                     // Handle JObject from JSON deserialization
                     else if (data is JObject jObj)
                     {
-                        using var reader = jObj.CreateReader();
-                        var serializer = UnityJsonSettings.CreateSerializer();
-                        return serializer.Deserialize<T>(reader) ?? defaultValue;
+                        return JsonSerializerUtils.DeserializeJObject<T>(jObj);
                     }
-                    // Fallback for other object types (should be rare with generic approach)
                     else
                     {
-                        var serializer = UnityJsonSettings.CreateSerializer();
-                        var jToken = JToken.FromObject(data);
-                        return jToken.ToObject<T>(serializer) ?? defaultValue;
+                        return JsonSerializerUtils.DeserializeJToken<T>(data);
                     }
                 }
                 catch (Exception e)
@@ -160,50 +139,6 @@ namespace NekoSerialize
 
             Log.Warn($"[SaveLoadService] No data found for key: {key.Colorize(Swatch.VR)}. Returning default value.");
             return defaultValue;
-        }
-
-        /// <summary>
-        /// Registers a saveable component with the manager.
-        /// </summary>
-        public static void RegisterSaveableComponent(ISaveableComponent saveable)
-        {
-            if (!s_isInitialized)
-            {
-                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
-                return;
-            }
-
-            if (!s_saveableComponents.Contains(saveable))
-            {
-                s_saveableComponents.Add(saveable);
-
-                if (saveable.AutoLoad)
-                {
-                    saveable.Load();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Unregister a saveable component from the manager.
-        /// </summary>
-        public static void UnregisterSaveableComponent(ISaveableComponent saveable)
-        {
-            if (!s_isInitialized)
-            {
-                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
-                return;
-            }
-
-            if (s_saveableComponents.Contains(saveable))
-            {
-                if (saveable.AutoSave)
-                {
-                    saveable.Save();
-                }
-
-                s_saveableComponents.Remove(saveable);
-            }
         }
 
         /// <summary>
@@ -233,11 +168,7 @@ namespace NekoSerialize
         /// </summary>
         public static bool HasData(string key)
         {
-            if (!s_isInitialized)
-            {
-                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
-                return false;
-            }
+            EnsureInitialized();
             return s_saveData.ContainsKey(key);
         }
 
@@ -246,11 +177,8 @@ namespace NekoSerialize
         /// </summary>
         public static void DeleteData(string key)
         {
-            if (!s_isInitialized)
-            {
-                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
-                return;
-            }
+            EnsureInitialized();
+
             if (s_saveData.ContainsKey(key))
             {
                 s_saveData.Remove(key);
@@ -263,20 +191,7 @@ namespace NekoSerialize
         /// </summary>
         public static void SaveAll()
         {
-            if (!s_isInitialized)
-            {
-                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
-                return;
-            }
-
-            // Save all registered components first.
-            foreach (var component in s_saveableComponents)
-            {
-                if (component.AutoSave)
-                {
-                    component.Save();
-                }
-            }
+            EnsureInitialized();
 
             // Store last save time in Utc time - now safe from recursion
             Save(LastSaveTimeKey, DateTimeService.UtcNow);
@@ -284,28 +199,12 @@ namespace NekoSerialize
         }
 
         /// <summary>
-        /// Load all data from persistent storage.
-        /// </summary>
-        public static void LoadAll()
-        {
-            if (!s_isInitialized)
-            {
-                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
-                return;
-            }
-            s_saveData = s_dataHandler.LoadData();
-        }
-
-        /// <summary>
         /// Save all data asynchronously.
         /// </summary>
         public static async Task SaveAllAsync()
         {
-            if (!s_isInitialized)
-            {
-                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
-                return;
-            }
+            EnsureInitialized();
+
             try
             {
                 Save(LastSaveTimeKey, DateTimeService.UtcNow);
@@ -320,15 +219,18 @@ namespace NekoSerialize
         }
 
         /// <summary>
+        /// Load all data from persistent storage.
+        /// </summary>
+        private static void LoadAll()
+        {
+            s_saveData = s_dataHandler.LoadData();
+        }
+
+        /// <summary>
         /// Load all data asynchronously.
         /// </summary>
-        public static async Task LoadAllAsync()
+        private static async Task LoadAllAsync()
         {
-            if (!s_isInitialized)
-            {
-                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
-                return;
-            }
             try
             {
                 var loadedData = await s_dataHandler.LoadDataAsync();
@@ -343,39 +245,14 @@ namespace NekoSerialize
         }
 
         /// <summary>
-        /// Check if any save data exists.
-        /// </summary>
-        public static bool SaveDataExists()
-        {
-            if (!s_isInitialized)
-            {
-                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
-                return false;
-            }
-            return s_dataHandler.SaveDataExists();
-        }
-
-        /// <summary>
         /// Delete all save data.
         /// </summary>
         public static void DeleteAllData()
         {
-            if (!s_isInitialized)
-            {
-                Log.Warn("[SaveLoadService] Service not initialized. Call SaveLoadService.Initialize() or SaveLoadService.InitializeAsync() first.");
-                return;
-            }
+            EnsureInitialized();
             s_dataHandler.DeleteSaveData();
             s_saveData.Clear();
             Log.Info("[SaveLoadService] All save data deleted");
-        }
-
-        /// <summary>
-        /// Load game data from persistent storage.
-        /// </summary>
-        private static void LoadGame()
-        {
-            s_saveData = s_dataHandler.LoadData();
         }
 
         /// <summary>
@@ -413,24 +290,6 @@ namespace NekoSerialize
 
             try
             {
-                if (s_saveableComponents.Count > 0)
-                {
-                    for (int i = s_saveableComponents.Count - 1; i >= 0; i--)
-                    {
-                        var component = s_saveableComponents[i];
-                        if (component.AutoSave)
-                        {
-                            component.Save();
-                        }
-
-                        s_saveableComponents.RemoveAt(i);
-                    }
-
-                    s_saveableComponents.Clear();
-                }
-
-                SaveAll();
-
                 // Clear cached data.
                 s_saveData?.Clear();
                 s_saveData = null;
