@@ -70,14 +70,6 @@ namespace NekoSerialize
         }
 
         /// <summary>
-        /// Saves all data asynchronously.
-        /// </summary>
-        public static async Task SaveAllAsync()
-        {
-            await SaveLoadService.SaveAllAsync();
-        }
-
-        /// <summary>
         /// Gets the last save time.
         /// </summary>
         public static DateTime LastSaveTime

@@ -17,7 +17,7 @@ namespace NekoSerialize
         /// <summary>
         /// Saves the given data to PlayerPrefs.
         /// </summary>
-        public override void SaveData(Dictionary<string, object> data)
+        public override void WriteData(Dictionary<string, object> data)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace NekoSerialize
         /// <summary>
         /// Loads the saved data from PlayerPrefs.
         /// </summary>
-        public override Dictionary<string, object> LoadData()
+        public override Dictionary<string, object> ReadData()
         {
             try
             {
@@ -62,7 +62,7 @@ namespace NekoSerialize
         /// <summary>
         /// Deletes the saved data from PlayerPrefs.
         /// </summary>
-        public override void DeleteSaveData()
+        public override void DeleteData()
         {
             if (PlayerPrefs.HasKey(_settings.PlayerPrefsKey))
             {
@@ -75,7 +75,7 @@ namespace NekoSerialize
         /// <summary>
         /// Checks if there is saved data in PlayerPrefs.
         /// </summary>
-        public override bool SaveDataExists()
+        public override bool DataExists()
         {
             return PlayerPrefs.HasKey(_settings.PlayerPrefsKey);
         }

@@ -18,25 +18,25 @@ namespace NekoSerialize
             _jsonSettings.Formatting = _settings.PrettyPrintJson ? Formatting.Indented : Formatting.None;
         }
 
-        public abstract void SaveData(Dictionary<string, object> data);
-        public abstract Dictionary<string, object> LoadData();
-        public abstract void DeleteSaveData();
-        public abstract bool SaveDataExists();
+        public abstract void WriteData(Dictionary<string, object> data);
+        public abstract Dictionary<string, object> ReadData();
+        public abstract void DeleteData();
+        public abstract bool DataExists();
 
         /// <summary>
         /// Asynchronously saves the game data without blocking the main thread.
         /// </summary>
-        public virtual async Task SaveDataAsync(Dictionary<string, object> data)
+        public virtual async Task WriteDataAsync(Dictionary<string, object> data)
         {
-            await Task.Run(() => SaveData(data));
+            await Task.Run(() => WriteData(data));
         }
 
         /// <summary>
         /// Asynchronously loads the game data without blocking the main thread.
         /// </summary>
-        public virtual async Task<Dictionary<string, object>> LoadDataAsync()
+        public virtual async Task<Dictionary<string, object>> ReadDataAsync()
         {
-            return await Task.Run(() => LoadData());
+            return await Task.Run(() => ReadData());
         }
 
         /// <summary>

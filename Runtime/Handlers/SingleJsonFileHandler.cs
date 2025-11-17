@@ -20,7 +20,7 @@ namespace NekoSerialize
         /// <summary>
         /// Saves the given data to a JSON file.
         /// </summary>
-        public override void SaveData(Dictionary<string, object> data)
+        public override void WriteData(Dictionary<string, object> data)
         {
             try
             {
@@ -37,7 +37,7 @@ namespace NekoSerialize
         /// <summary>
         /// Loads the saved data from a JSON file.
         /// </summary>
-        public override Dictionary<string, object> LoadData()
+        public override Dictionary<string, object> ReadData()
         {
             try
             {
@@ -64,7 +64,7 @@ namespace NekoSerialize
         /// <summary>
         /// Deletes the saved data file.
         /// </summary>
-        public override void DeleteSaveData()
+        public override void DeleteData()
         {
             if (File.Exists(SavePath))
             {
@@ -76,7 +76,7 @@ namespace NekoSerialize
         /// <summary>
         /// Checks if the save data file exists.
         /// </summary>
-        public override bool SaveDataExists()
+        public override bool DataExists()
         {
             return File.Exists(SavePath);
         }

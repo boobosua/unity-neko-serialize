@@ -33,7 +33,7 @@ namespace NekoSerialize
 
             LoadSettings();
             InitializeDataHandler();
-            LoadAll();
+            FetchSaveData();
             StartAutoSaveIfNeeded();
             s_isInitialized = true;
 
@@ -50,7 +50,7 @@ namespace NekoSerialize
 
             LoadSettings();
             InitializeDataHandler();
-            await LoadAllAsync();
+            await FetchSaveDataAsync();
             StartAutoSaveIfNeeded();
             s_isInitialized = true;
 
@@ -102,7 +102,20 @@ namespace NekoSerialize
             EnsureInitialized();
 
             s_saveData[key] = data;
-            s_dataHandler.SaveData(s_saveData);
+            s_saveData[LastSaveTimeKey] = DateTimeService.UtcNow;
+            s_dataHandler.WriteData(s_saveData);
+        }
+
+        /// <summary>
+        /// Save data asynchronously to persistent storage.
+        /// </summary>
+        public static async Task SaveAsync<T>(string key, T data)
+        {
+            EnsureInitialized();
+
+            s_saveData[key] = data;
+            s_saveData[LastSaveTimeKey] = DateTimeService.UtcNow;
+            await s_dataHandler.WriteDataAsync(s_saveData);
         }
 
         /// <summary>
@@ -141,6 +154,12 @@ namespace NekoSerialize
             return defaultValue;
         }
 
+        public static async Task<T> LoadAsync<T>(string key, T defaultValue = default)
+        {
+            EnsureInitialized();
+            return await Task.Run(() => Load<T>(key, defaultValue));
+        }
+
         /// <summary>
         /// Determines if auto-save is enabled based on current settings.
         /// </summary>
@@ -159,7 +178,7 @@ namespace NekoSerialize
         {
             if (AutoSaveEnabled())
             {
-                AutoSaveManager.Instance.Initialize(s_settings);
+                SaveLoadManager.Instance.Initialize(s_settings);
             }
         }
 
@@ -187,54 +206,21 @@ namespace NekoSerialize
         }
 
         /// <summary>
-        /// Save all cached data to persistent storage.
-        /// </summary>
-        public static void SaveAll()
-        {
-            EnsureInitialized();
-
-            // Store last save time in Utc time - now safe from recursion
-            Save(LastSaveTimeKey, DateTimeService.UtcNow);
-            s_dataHandler.SaveData(s_saveData);
-        }
-
-        /// <summary>
-        /// Save all data asynchronously.
-        /// </summary>
-        public static async Task SaveAllAsync()
-        {
-            EnsureInitialized();
-
-            try
-            {
-                Save(LastSaveTimeKey, DateTimeService.UtcNow);
-                var dataToSave = new Dictionary<string, object>(s_saveData);
-                await s_dataHandler.SaveDataAsync(dataToSave);
-                Log.Info("[SaveLoadService] All data saved asynchronously");
-            }
-            catch (Exception e)
-            {
-                Log.Error($"[SaveLoadService] Error during async save: {e.Message.Colorize(Swatch.VR)}");
-            }
-        }
-
-        /// <summary>
         /// Load all data from persistent storage.
         /// </summary>
-        private static void LoadAll()
+        private static void FetchSaveData()
         {
-            s_saveData = s_dataHandler.LoadData();
+            s_saveData = s_dataHandler.ReadData();
         }
 
         /// <summary>
         /// Load all data asynchronously.
         /// </summary>
-        private static async Task LoadAllAsync()
+        private static async Task FetchSaveDataAsync()
         {
             try
             {
-                var loadedData = await s_dataHandler.LoadDataAsync();
-                s_saveData = loadedData;
+                s_saveData = await s_dataHandler.ReadDataAsync();
                 Log.Info("[SaveLoadService] All data loaded asynchronously");
             }
             catch (Exception e)
@@ -250,7 +236,7 @@ namespace NekoSerialize
         public static void DeleteAllData()
         {
             EnsureInitialized();
-            s_dataHandler.DeleteSaveData();
+            s_dataHandler.DeleteData();
             s_saveData.Clear();
             Log.Info("[SaveLoadService] All save data deleted");
         }
@@ -262,6 +248,8 @@ namespace NekoSerialize
         {
             return Load(LastSaveTimeKey, DateTime.MinValue);
         }
+
+        public static void SaveAll() { }
 
 #if UNITY_EDITOR
         /// <summary>
@@ -335,7 +323,7 @@ namespace NekoSerialize
 
             try
             {
-                var persistedData = s_dataHandler.LoadData();
+                var persistedData = s_dataHandler.ReadData();
                 return persistedData.ContainsKey(key);
             }
             catch

@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace NekoSerialize
 {
-    public sealed class AutoSaveManager : PersistentSingleton<AutoSaveManager>
+    public sealed class SaveLoadManager : PersistentSingleton<SaveLoadManager>
     {
         private SaveLoadSettings _settings;
         private Coroutine _autoSaveCoroutine;
